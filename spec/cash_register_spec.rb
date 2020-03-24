@@ -1,6 +1,6 @@
 describe 'CashRegister' do
   let(:cash_register) { CashRegister.new }
-  let(:cash_register_with_discount) { CashRegister.new(20) }
+  let(:cash_register_with_discount) { CashRegister.new(discount: 20) }
 
   describe '::new' do
     it 'sets an instance variable @total on initialization to zero' do
@@ -48,7 +48,8 @@ describe 'CashRegister' do
 
       it 'returns success message with updated total' do
         cash_register_with_discount.add_item("macbook air", 1000)
-        expect(cash_register_with_discount.apply_discount).to eq("After the discount, the total comes to $800.")
+        cash_register_with_discount.apply_discount
+        expect(cash_register_with_discount.latest_discount_message).to eq("After the discount, the total comes to $800.")
       end
 
       it 'reduces the total' do
@@ -56,11 +57,20 @@ describe 'CashRegister' do
         cash_register_with_discount.add_item("macbook air", 1000)
         expect{cash_register_with_discount.apply_discount}.to change{cash_register_with_discount.total}.by(-200)
       end
+      
+      it 'applies the discount exactly once' do
+        cash_register.total = 0
+        cash_register_with_discount.add_item("macbook air", 1000)
+        cash_register_with_discount.apply_discount
+        cash_register_with_discount.apply_discount
+        expect(cash_register_with_discount.total).to eq(800)
+      end
     end
 
     context 'the cash register was not initialized with an employee discount' do
       it 'returns a string error message that there is no discount to apply' do
-        expect(cash_register.apply_discount).to eq("There is no discount to apply.")
+        cash_register.apply_discount
+        expect(cash_register.latest_discount_message).to eq("There is no discount to apply.")
       end
     end
   end
@@ -70,7 +80,11 @@ describe 'CashRegister' do
       new_register = CashRegister.new
       new_register.add_item("eggs", 1.99)
       new_register.add_item("tomato", 1.76, 3)
-      expect(new_register.items).to eq(["eggs", "tomato", "tomato", "tomato"])
+      expect(new_register.items.size).to eq(2)
+      expect(new_register.items[0].name).to eq("eggs")
+      expect(new_register.items[0].quantity).to eq(1)
+      expect(new_register.items[1].name).to eq("tomato")
+      expect(new_register.items[1].quantity).to eq(3)
     end
   end
 
